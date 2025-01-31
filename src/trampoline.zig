@@ -39,7 +39,7 @@ pub fn get_relative_address(source: *const anyopaque, destination: *const anyopa
 pub fn detour(source: *anyopaque, destination: *const anyopaque, len: comptime_int) void {
     if (len < 5) return;
 
-    const relative_addr = get_relative_address(destination, source); // : isize = @as(isize, @intCast(@as(usize, @intFromPtr(destination)))) - @as(isize, @intCast(@as(usize, @intFromPtr(source)))) - 5;
+    const relative_addr = get_relative_address(destination, source);
     const source_u8: [*]u8 = @ptrCast(source);
 
     var old_protection: mem.PAGE_PROTECTION_FLAGS = .{};
@@ -59,9 +59,8 @@ pub fn trampoline_hook(source: *anyopaque, destination: *const anyopaque, len: c
 
     @memcpy(gateway[0..len], @as([*]const u8, @ptrCast(source))[0..len]);
 
-    const gateway_relative_addr = get_relative_address(source, gateway); //isize = @as(isize, @intCast(@as(usize, @intFromPtr(source))) - @as(isize, @intCast(@as(usize, @intFromPtr(gateway)))) - 5;
+    const gateway_relative_addr = get_relative_address(source, gateway);
 
-    // @as(*u8, @ptrFromInt( + len)).* = 0xE9;
     gateway[len] = 0xE9;
     std.mem.writeInt(isize, gateway[len + 1 .. len + 5], gateway_relative_addr, .little);
 
