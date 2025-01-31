@@ -12,24 +12,24 @@ pub const hook_state = struct {
 pub const global_hooks_states = struct {
     var list: std.ArrayList(hook_state) = undefined;
     var allocator: std.mem.Allocator = undefined;
-
-    pub fn init(alloc: std.mem.Allocator) void {
-        global_hooks_states.list = std.ArrayList(hook_state).init(alloc);
-        global_hooks_states.allocator = alloc;
-    }
-
-    // i would not recommend putting this inside of a defer block
-    pub fn deinit() void {
-        for (global_hooks_states.list.items) |hook_data| {
-            var old_protection: mem.PAGE_PROTECTION_FLAGS = .{};
-            _ = mem.VirtualProtect(hook_data.original_ptr, hook_data.len, .{ .PAGE_EXECUTE_READWRITE = 1 }, &old_protection);
-            @memcpy(@as([*]u8, @ptrCast(hook_data.original_ptr))[0..hook_data.len], @as([*]u8, @ptrCast(hook_data.original_instr))[0..hook_data.len]);
-            _ = mem.VirtualProtect(hook_data.original_ptr, hook_data.len, old_protection, &old_protection);
-
-            _ = mem.VirtualFree(hook_data.original_instr, hook_data.len, .DECOMMIT);
-        }
-    }
 };
+
+pub fn init(alloc: std.mem.Allocator) void {
+    global_hooks_states.list = std.ArrayList(hook_state).init(alloc);
+    global_hooks_states.allocator = alloc;
+}
+
+// i would not recommend putting this inside of a defer block
+pub fn deinit() void {
+    for (global_hooks_states.list.items) |hook_data| {
+        var old_protection: mem.PAGE_PROTECTION_FLAGS = .{};
+        _ = mem.VirtualProtect(hook_data.original_ptr, hook_data.len, .{ .PAGE_EXECUTE_READWRITE = 1 }, &old_protection);
+        @memcpy(@as([*]u8, @ptrCast(hook_data.original_ptr))[0..hook_data.len], @as([*]u8, @ptrCast(hook_data.original_instr))[0..hook_data.len]);
+        _ = mem.VirtualProtect(hook_data.original_ptr, hook_data.len, old_protection, &old_protection);
+
+        _ = mem.VirtualFree(hook_data.original_instr, hook_data.len, .DECOMMIT);
+    }
+}
 
 pub fn get_relative_address(source: *const anyopaque, destination: *const anyopaque) isize {
     return @as(isize, @intCast(@as(usize, @intFromPtr(source)))) - @as(isize, @intCast(@as(usize, @intFromPtr(destination)))) - 5;

@@ -1,6 +1,6 @@
 const win32 = @import("zigwin32");
 const std = @import("std");
-const trampoline = @import("trampoline.zig");
+const hooking = @import("trampoline.zig");
 const x = win32.ui.windows_and_messaging;
 
 var o_messagebox: *const fn () c_int = undefined;
@@ -18,13 +18,21 @@ pub fn messagebox() c_int {
 pub fn main() void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator: std.mem.Allocator = gpa.allocator();
-    trampoline.global_hooks_states.init(allocator);
+    hooking.init(allocator);
 
-    o_messagebox = @ptrCast(trampoline.trampoline_hook(@constCast(&messagebox), &msgbox_hook, 6));
+    o_messagebox = @ptrCast(hooking.trampoline_hook(@constCast(&messagebox), &msgbox_hook, 6));
     std.log.debug("omsgb: {x}", .{o_messagebox});
     // test hook, should run hook then original
     std.log.debug("res: {d}", .{messagebox()});
     // test unhook, should run original alone
-    trampoline.global_hooks_states.deinit();
+    hooking.deinit();
     std.log.debug("res: {d}", .{messagebox()});
+
+    // setup hooks again
+    hooking.init(allocator);
+    // hook msgbox
+    o_messagebox = @ptrCast(hooking.trampoline_hook(@constCast(&messagebox), &msgbox_hook, 6));
+    // test hook, should run hook then original
+    std.log.debug("res: {d}", .{messagebox()});
+    hooking.deinit();
 }
