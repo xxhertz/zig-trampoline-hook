@@ -1,0 +1,15 @@
+.{
+    .name = "zig-trampoline-hook",
+    .version = "0.0.0",
+    .dependencies = .{
+        .zigwin32 = .{
+            .url = "git+https://github.com/marlersoft/zigwin32?ref=master#01793fe2abe5e6dc6f78b0d41170dc8d01584f1a",
+            .hash = "12205790582b13f84eab3cd4d54c7c8f2c3fda2ac9e1d3f2ac847d76c096bfbac825",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
